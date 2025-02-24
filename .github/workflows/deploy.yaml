@@ -24,11 +24,6 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      - shell: bash
-        working-directory: ""
-        run: |
-          source .env
-          echo "Loading environment variables from .env"
       - name: Deploy to Cloudflare
         # https://github.com/cloudflare/wrangler-action/issues/347
         uses: cloudflare/wrangler-action@v3.13.0
