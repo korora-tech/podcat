@@ -3,8 +3,6 @@ name: preview
 on:
   pull_request:
     types: [opened, synchronize]
-    paths:
-      - ".github/workflows/review.yaml"
 
 permissions:
   pull-requests: write
