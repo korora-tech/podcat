@@ -1,0 +1,47 @@
+name: preview
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - ".github/workflows/review.yaml"
+
+permissions:
+  pull-requests: write
+
+jobs:
+  deploy:
+    if: |
+      github.event.pull_request.author_association == 'OWNER' ||
+      github.event.pull_request.author_association == 'MEMBER' ||
+      github.event.pull_request.author_association == 'COLLABORATOR'
+    runs-on: ubuntu-latest
+    name: Deploy to Cloudflare
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - shell: bash
+        run: |
+          source .env
+          echo "Loading environment variables from .env"
+      - id: deploy
+        name: Deploy to Cloudflare
+        # https://github.com/cloudflare/wrangler-action/issues/347
+        uses: cloudflare/wrangler-action@v3.13.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          packageManager: bun
+          command: pages deploy --project-name=podcat ./dist
+          preCommands: |
+            bun run build
+      - name: comment-with-preview-url
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          message: |
+            🌐 Your preview deployment can be viewed now 🚀
+
+            Visit: ${{ steps.deploy.outputs.deployment-url }}

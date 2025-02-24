@@ -1,0 +1,42 @@
+name: deploy
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy.yaml"
+
+permissions:
+  pull-requests: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: deploy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - shell: bash
+        working-directory: ""
+        run: |
+          source .env
+          echo "Loading environment variables from .env"
+      - name: Deploy to Cloudflare
+        # https://github.com/cloudflare/wrangler-action/issues/347
+        uses: cloudflare/wrangler-action@v3.13.0
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          packageManager: bun
+          command: pages deploy --project-name=podcat ./dist
+          preCommands: |
+            bun run build
